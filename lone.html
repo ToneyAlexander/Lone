@@ -27,6 +27,7 @@
 		}
 		function Dancer(x, y, velocity){
 			this.pos = new Pair(x, y);
+			//Add velocity field
 			this.velocity = velocity;
 		}
 
@@ -44,15 +45,39 @@
 	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), circle));
 	    	}
 
+	    	//FIX ME
+	    	function centralTendency(x, y, dx, dy){
+	    		var p = new Pair(window.innerWidth/2, window.innerHeight/2);
+	    		var radius = Math.pow(x-p.x, 2) + Math.pow(y-p.y, 2) - 10000;
+
+	    		if(radius > 0){
+	    			if(x < p.x){
+	    				dx += 2*dx*Math.random();
+	    			}else{
+	    				dx -= 2*dx*Math.random();
+	    			}
+	    			if(y < p.y){
+	    				dy += 2*dy*Math.random();
+	    			}else{
+	    				dy -= 2*dy*Math.random();
+	    			}
+	    		}
+	    		return new Pair(dx, dy);
+	    	}
+
 	    	function circle(x, y, t){
 	    		//Create factor to randomly tend towards center
-	    		dx = 3*Math.cos(t)*Math.random();
-	    		dy = 12*Math.sin(t)*Math.random();
+	    		dx = 1;// 10*Math.cos(t*.05);
+	    		dy = 1;//10*Math.sin(t*.05);
+
+	    		var p = centralTendency(x, y, dx, dy);
+	    		dx = p.x;
+	    		dy = p.y;
 
 	    		dx2 = Math.pow(dx, 2);
 	    		dy2 = Math.pow(dy, 2);
 
-	    		scale = 5/Math.pow(dx2 + dy2, .5);
+	    		scale = SPEED/Math.pow(dx2 + dy2, .5);
 
 	    		console.log(dx2 + " " + dy2);
 
@@ -73,7 +98,7 @@
 	    var mainloop = function(){
 	    	update(t);
 	    	draw();
-	    	t+=.05;
+	    	t++;
 	    };
 	    setInterval(mainloop, 16);
 
