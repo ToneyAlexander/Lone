@@ -18,7 +18,7 @@
 
 	<script>
 		var dancers = [];
-		const SPEED = 5;
+		const SPEED = 3;
 		//Node and Pair are mathematically equivalent !important?
 		function Pair(x, y){
 			this.x = x;
@@ -29,11 +29,13 @@
 			this.next = next;
 		}
 		//Creative individuas, periodically request inspiration from nearby, replace nodes, take error calculation, test values in network - makes query to the world
-		function Dancer(x, y, motion){
+		function Dancer(x, y, motion, color, alpha=.25){
 			this.pos = new Pair(x, y);
 			this.vel = new Pair(.5, .5);
 			this.motion = motion;
 			this.memory = new Node(this.vel, null);
+			this.color = color;
+			this.alpha = alpha;
 		}
 		function init(){
 			var canvas = document.getElementById('lone'),
@@ -43,16 +45,29 @@
 	    	resizeCanvas();
 	    	w = window.innerWidth;
 	    	h = window.innerHeight;
-	    	num = 5;
+	    	num = 20;
+
+	    	org = "#FFA500";
+	    	grn = "#00FF00";
+	    	blu = "#5443FF";
+	    	tel = "#00FFFF";
+	    	pur = "#FF00FF";
+	    	//Dark pur "#490A3D"
+	    	//Red, pink, orange, yellow, tea
+	    	pal = ["#A31D00", "#BD1550", "#FF8C00", "#FFFF00", "#8A9B0F", blu, tel];
+
 	    	for(c = 0; c < num; c++){
-	    		//dancers.push(new Dancer(w*Math.random(), h*Math.random(), drift));
+	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), spaz, pal[1]));
+	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), awkSingleMem, pal[2]));
+	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), driftAlpha, pal[3], .25));
+	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), driftAlpha, pal[0], .50));
+	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), driftAlpha, pal[4], .75));
+	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), mem3, pal[5]));
 	    	}
-	    	for(c = 0; c < num; c++){
-	    		//dancers.push(new Dancer(w*Math.random(), h*Math.random(), scatter));
-	    	}
-	    	for(c = 0; c < num; c++){
-	    		dancers.push(new Dancer(w*Math.random(), h*Math.random(), mem3));
-	    	}
+
+	    	//Average with old velocities
+	        //Give linked list of memory! older = less remember (.5* + .25* + ... etc. )
+
 	    	//FIX ME
 	    	function centralTendency(x, y, dx, dy){
 	    		var p = new Pair(window.innerWidth/2, window.innerHeight/2);
@@ -85,12 +100,12 @@
 	    		dy2 = Math.pow(dy, 2);
 	    		scale = SPEED/Math.pow(dx2 + dy2, .5);
 	    		console.log("!" + dx2 + " " + dy2);
-	    		/* dx^2 + dy^2 = 25*/
+	    		/* dx^2 + dy^2 = 25 */
 	    		console.log("!" + Math.pow(dx*scale, 2) + Math.pow(dy*scale, 2));
 	        	return new Pair(x + dx*scale, y + dy*scale);
 	        }
 
-	        function drift(t){
+	        function awkSingleMem(t){
 	        	x = this.pos.x;
 	        	y = this.pos.y;
 	        	dx0 = this.vel.x;
@@ -98,8 +113,7 @@
 
 	        	dx = 2*Math.random()-1;
 	        	dy = 2*Math.random()-1;
-	        	//Average with old velocities
-	        	//Give linked list of memory! older = less remember (.5* + .25* + ... etc. )
+
 	        	dx = (dx + .5*dx0)/ 2;
 	        	dy = (dy + .5*dy0)/ 2;
 
@@ -112,9 +126,33 @@
 	    		scale = SPEED/Math.pow(dx2 + dy2, .5);
 
 				this.vel = new Pair(dx*scale, dy*scale);
+	    		this.pos = new Pair(x + this.vel.x, y + this.vel.y); 
+	        }
+	        function driftAlpha(t){
+	        	x = this.pos.x;
+	        	y = this.pos.y;
+	        	dx0 = this.vel.x;
+	        	dy0 = this.vel.y;
+
+	        	dx = 2*Math.random()-1;
+	        	dy = 2*Math.random()-1;
+
+	        	//Exponential moving average
+	        	dx = dx0 + this.alpha * (dx - dx0);
+	        	dy = dy0 + this.alpha * (dy - dy0);
+
+	        	dx = simpleBorder(x, dx, 10, 0, window.innerWidth);
+	        	dy = simpleBorder(y, dy, 10, 0, window.innerHeight);
+
+	        	//Scale to match constant velocity
+	        	dx2 = Math.pow(dx, 2);
+	    		dy2 = Math.pow(dy, 2);
+	    		scale = SPEED/Math.pow(dx2 + dy2, .5);
+
+				this.vel = new Pair(dx*scale, dy*scale);
 	    		this.pos = new Pair(x + this.vel.x, y + this.vel.y);  		
 	        }
-	        function scatter(t){
+	        function spaz(t){
 	        	x = this.pos.x;
 	        	y = this.pos.y;
 	        	dx = 2*Math.random()-1;
@@ -131,7 +169,8 @@
 				this.vel = new Pair(dx*scale, dy*scale);
 	    		this.pos = new Pair(x + this.vel.x, y + this.vel.y);
 	        }
-	        //Debug -> mem3 behaves as a scatter
+	        //Mem3 not needed?
+	        //Debug -> mem3 behaves as a spaz
 	        function mem3(t){
 	        	//figure out references and eleting and shit
 	        	x = this.pos.x;
@@ -175,6 +214,7 @@
 				this.vel = new Pair(dx*scale, dy*scale);
 	    		this.pos = new Pair(x + this.vel.x, y + this.vel.y);  	
 	        }
+
 	        function simpleBorder(c, dc, width, min, max){
 	        	if(c < min + width){
 	        		return 1;
@@ -214,15 +254,22 @@
 	    	drawBG(ctx, w, h);
 	    	for(c = 0; c < dancers.length; c++){
 	    		ctx.beginPath();
-	    		ctx.arc(dancers[c].pos.x, dancers[c].pos.y, 2, 0, 2*Math.PI);
+	    		ctx.strokeStyle = dancers[c].color;
+	    		ctx.lineWidth=3;
+	    		ctx.arc(dancers[c].pos.x, dancers[c].pos.y, 4, 0, 2*Math.PI);
 	    		ctx.stroke();
 	    	}
+	    	ctx.strokeStyle="#000000";
 	    }
 	    function drawBG(ctx, w, h){
 			// Create gradient
 			var grd = ctx.createRadialGradient(w/2,h/2,100, w/2,h/2, 800);
-			grd.addColorStop(0,"white");
-			grd.addColorStop(1,"lightgray");
+			//Light theme
+			//grd.addColorStop(0,"white");
+			//grd.addColorStop(1,"lightgray");
+			//Dark theme
+			grd.addColorStop(0,"#303030");
+			grd.addColorStop(1,"black");
 			// Fill with gradient
 			ctx.fillStyle = grd;
 			ctx.fillRect(0,0,w,h);
